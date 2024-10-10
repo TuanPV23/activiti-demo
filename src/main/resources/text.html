@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BPMN Editor</title>
+    <script src="https://unpkg.com/bpmn-js@9.0.0/dist/bpmn-viewer.production.min.js"></script>
+    <script src="https://unpkg.com/bpmn-js@9.0.0/dist/bpmn-modeler.production.min.js"></script>
+    <style>
+        #canvas {
+            height: 600px;
+            width: 100%;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+<div id="canvas"></div>
+<button id="save-diagram">Save Diagram</button>
+
+<script>
+    const bpmnModeler = new BpmnJS({
+        container: '#canvas'
+    });
+
+    // Load empty BPMN diagram
+    const emptyDiagram = `<?xml version="1.0" encoding="UTF-8"?>
+    <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+        targetNamespace="http://bpmn.io/schema/bpmn"
+        id="Definitions_1">
+      <bpmn:process id="Process_1" isExecutable="true">
+        <bpmn:startEvent id="StartEvent_1"/>
+      </bpmn:process>
+      <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+        <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+          <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+            <dc:Bounds x="179" y="99" width="36" height="36"/>
+          </bpmndi:BPMNShape>
+        </bpmndi:BPMNPlane>
+      </bpmndi:BPMNDiagram>
+    </bpmn:definitions>`;
+
+    // Import empty diagram
+    bpmnModeler.importXML(emptyDiagram, (err) => {
+        if (err) {
+            console.error('Failed to load diagram', err);
+        } else {
+            console.log('BPMN diagram loaded successfully');
+        }
+    });
+
+    // Save diagram to BPMN XML
+    document.getElementById('save-diagram').addEventListener('click', async function() {
+        try {
+            const { xml } = await bpmnModeler.saveXML({ format: true });
+            console.log(xml);
+
+            // Send the BPMN XML to the Spring Boot backend (use Fetch API or Axios)
+            fetch('/api/deploy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/xml'
+                },
+                body: xml
+            }).then(response => {
+                if (response.ok) {
+                    alert('Diagram deployed successfully');
+                } else {
+                    alert('Failed to deploy diagram');
+                }
+            });
+
+        } catch (err) {
+            console.error('Could not save BPMN diagram', err);
+        }
+    });
+</script>
+
+</body>
+</html>
